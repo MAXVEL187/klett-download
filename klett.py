@@ -2,26 +2,29 @@
 # https://guns.lol/maxvel187
 # this is for educational purposes only and may violate klett.de Terms of Service
 # use this at your own risk!
+
 import requests
-print("inspect elemement, go to network tab, refresh, go on any and find Cookies")
+from PIL import Image
+import os
+
+print("inspect element, go to network tab, refresh, go to the first request and find Cookies")
 print("it should look like that")
 print("SESSION=xxxxxxxxxxxxx; klett_cookie_consent={%22statistiken%22:true}; klett_session=xxxxxxxxxx; SERVERID=backend4")
-session = input("""Input your klett.de SESSION:""")
-klett_session = input("""Input your klett.de klett_session:""")
+session = input("Input your klett.de SESSION: ")
+klett_session = input("Input your klett.de klett_session: ")
 print("your book id is found in the link of your e-book (https://bridge.klett.de/(here)/?page=x)")
-book = input("Input your book id:")
+book = input("Input your book id: ")
 print("1 = normal")
 print("2 = good")
 print("3 = high details")
-qual = input("In what quality do you want to download:")
+qual = input("In what quality do you want to download: ")
 
 if qual == "1":
-    print("")
+    pass
 elif qual == "2":
-    print("")
+    pass
 elif qual == "3":
     qual = "4"
-    print("")
 else:
     print("invalid quality, downloading normal")
     qual = "1"
@@ -47,17 +50,34 @@ cookies = {
     "SERVERID": "backend4"
 }
 
+downloaded_pages = []
+
 for pg in range(1, 1000):
     url = f"{url1}{pg}{url2}"
     response = requests.get(url, headers=headers, cookies=cookies)
 
     if response.status_code == 200:
-        filename = f"Padge_{pg}.png"
+        filename = f"Page_{pg}.png"
         with open(filename, "wb") as f:
             f.write(response.content)
         print(f"Image for page {pg} downloaded successfully.")
+        downloaded_pages.append(filename)
     else:
-        print(f"Failed to download image from page {pg}. Status code: {response.status_code}")
+        print(f"Stopped at page {pg} (status: {response.status_code}).")
         break
+
+if downloaded_pages:
+    print("Creating PDF file...")
+    images = [Image.open(img).convert("RGB") for img in downloaded_pages]
+    pdf_name = f"{book}_klett_book.pdf"
+    images[0].save(pdf_name, save_all=True, append_images=images[1:])
+    print(f"PDF created successfully: {pdf_name}")
+
+    # Optional cleanup (delete PNGs after PDF creation)
+    cleanup = input("Delete all PNG files after creating PDF? (y/n): ")
+    if cleanup.lower() == "y":
+        for img in downloaded_pages:
+            os.remove(img)
+        print("All PNG files deleted.")
 
 print("Success or invalid data provided.")
